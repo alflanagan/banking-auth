@@ -2,15 +2,16 @@ package app
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/ashishjuyal/banking-auth/domain"
 	"github.com/ashishjuyal/banking-auth/service"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
-	"log"
-	"net/http"
-	"os"
-	"time"
 )
 
 func Start() {

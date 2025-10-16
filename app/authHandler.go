@@ -2,10 +2,11 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/ashishjuyal/banking-auth/dto"
-	"github.com/ashishjuyal/banking-auth/service"
 	"log"
 	"net/http"
+
+	"github.com/ashishjuyal/banking-auth/dto"
+	"github.com/ashishjuyal/banking-auth/service"
 )
 
 type AuthHandler struct {
@@ -32,8 +33,9 @@ func (h AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-  Sample URL string
- http://localhost:8181/auth/verify?token=somevalidtokenstring&routeName=GetCustomer&customer_id=2000&account_id=95470
+	Sample URL string
+
+http://localhost:8181/auth/verify?token=somevalidtokenstring&routeName=GetCustomer&customer_id=2000&account_id=95470
 */
 func (h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	urlParams := make(map[string]string)
