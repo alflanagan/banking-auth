@@ -1,6 +1,6 @@
 module github.com/ashishjuyal/banking-auth
 
-go 1.15
+go 1.25.0
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -8,3 +8,5 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jmoiron/sqlx v1.2.0
 )
+
+require github.com/alflanagan/banking-lib v1.0.4 // indirect

@@ -1,3 +1,7 @@
+github.com/alflanagan/banking-lib v1.0.3 h1:gvc5rmfFdd15H1w5F6EuMrY+AboViP9I0ws1srMFOOY=
+github.com/alflanagan/banking-lib v1.0.3/go.mod h1:b/iXEC6D5vfJPXYK4lwu/I6EABkPzZTKjgBLPDSG0Ng=
+github.com/alflanagan/banking-lib v1.0.4 h1:dpXV0JAIFA80eOv4j2R75bQJXo1zEYvavUnymC9D8YI=
+github.com/alflanagan/banking-lib v1.0.4/go.mod h1:b/iXEC6D5vfJPXYK4lwu/I6EABkPzZTKjgBLPDSG0Ng=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/go-sql-driver/mysql v1.4.0/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
