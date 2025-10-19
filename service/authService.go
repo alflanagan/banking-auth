@@ -1,16 +1,16 @@
 package service
 
 import (
-	"errors"
+	"github.com/alflanagan/banking-lib/errs"
+	"github.com/alflanagan/banking-lib/logger"
 	"github.com/ashishjuyal/banking-auth/domain"
 	"github.com/ashishjuyal/banking-auth/dto"
-	"github.com/dgrijalva/jwt-go"
-	"log"
+	"github.com/golang-jwt/jwt"
 )
 
 type AuthService interface {
-	Login(dto.LoginRequest) (*string, error)
-	Verify(urlParams map[string]string) (bool, error)
+	Login(dto.LoginRequest) (*string, *errs.AppError)
+	Verify(urlParams map[string]string) (bool, *errs.AppError)
 }
 
 type DefaultAuthService struct {
@@ -18,22 +18,22 @@ type DefaultAuthService struct {
 	rolePermissions domain.RolePermissions
 }
 
-func (s DefaultAuthService) Login(req dto.LoginRequest) (*string, error) {
+func (s DefaultAuthService) Login(req dto.LoginRequest) (*string, *errs.AppError) {
 	login, err := s.repo.FindBy(req.Username, req.Password)
 	if err != nil {
-		return nil, err
+		return nil, errs.NewAuthenticationError(err.Error())
 	}
 	token, err := login.GenerateToken()
 	if err != nil {
-		return nil, err
+		return nil, errs.NewAuthenticationError(err.Error())
 	}
 	return token, nil
 }
 
-func (s DefaultAuthService) Verify(urlParams map[string]string) (bool, error) {
+func (s DefaultAuthService) Verify(urlParams map[string]string) (bool, *errs.AppError) {
 	// convert the string token to JWT struct
 	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
-		return false, err
+		return false, errs.NewUnexpectedError(err.Error())
 	} else {
 		/*
 		   Checking the validity of the token, this verifies the expiry
@@ -44,7 +44,7 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) (bool, error) {
 			mapClaims := jwtToken.Claims.(jwt.MapClaims)
 			// converting the token claims to Claims struct
 			if claims, err := domain.BuildClaimsFromJwtMapClaims(mapClaims); err != nil {
-				return false, err
+				return false, errs.NewAuthenticationError(err.Error())
 			} else {
 				/* if Role if user then check if the account_id and customer_id
 				   coming in the URL belongs to the same token
@@ -59,7 +59,7 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) (bool, error) {
 				return isAuthorized, nil
 			}
 		} else {
-			return false, errors.New("Invalid token")
+			return false, errs.NewAuthenticationError("invalid token")
 		}
 	}
 }
@@ -69,7 +69,7 @@ func jwtTokenFromString(tokenString string) (*jwt.Token, error) {
 		return []byte(domain.HMAC_SAMPLE_SECRET), nil
 	})
 	if err != nil {
-		log.Println("Error while parsing token: " + err.Error())
+		logger.Error("Error while parsing token: " + err.Error())
 		return nil, err
 	}
 	return token, nil
