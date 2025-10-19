@@ -2,7 +2,8 @@ package domain
 
 import (
 	"encoding/json"
-	"github.com/dgrijalva/jwt-go"
+
+	"github.com/golang-jwt/jwt"
 )
 
 const HMAC_SAMPLE_SECRET = "hmacSampleSecret"
