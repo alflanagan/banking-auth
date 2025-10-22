@@ -17,6 +17,4 @@ COPY . .
 # Expose port
 EXPOSE 8081
 
-WORKDIR /go/src
-
 CMD ["/bin/ash", "-c", "make run"]
