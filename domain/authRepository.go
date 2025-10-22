@@ -2,9 +2,10 @@ package domain
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 
 	"github.com/alflanagan/banking-lib/errs"
+	"github.com/alflanagan/banking-lib/logger"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -27,7 +28,7 @@ func (d AuthRepositoryDb) FindBy(username, password string) (*Login, *errs.AppEr
 		if err == sql.ErrNoRows {
 			return nil, errs.NewAuthenticationError("invalid credentials")
 		} else {
-			log.Println("Error while verifying login request from database: " + err.Error())
+			logger.Info(fmt.Sprintf("Error while verifying login request from database: %s", err.Error()))
 			return nil, errs.NewUnexpectedError("Unexpected database error")
 		}
 	}

@@ -46,23 +46,19 @@ func (h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if urlParams["token"] != "" {
-		isAuthorized, appError := h.service.Verify(urlParams)
-		if appError != nil {
-			writeResponse(w, http.StatusForbidden, notAuthorizedResponse())
+		appErr := h.service.Verify(urlParams)
+		if appErr != nil {
+			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.Message))
 		} else {
-			if isAuthorized {
-				writeResponse(w, http.StatusOK, authorizedResponse())
-			} else {
-				writeResponse(w, http.StatusForbidden, notAuthorizedResponse())
-			}
+			writeResponse(w, http.StatusOK, authorizedResponse())
 		}
 	} else {
 		writeResponse(w, http.StatusForbidden, "missing token")
 	}
 }
 
-func notAuthorizedResponse() map[string]bool {
-	return map[string]bool{"isAuthorized": false}
+func notAuthorizedResponse(msg string) map[string]any {
+	return map[string]any{"isAuthorized": false, "message": msg}
 }
 
 func authorizedResponse() map[string]bool {

@@ -12,8 +12,9 @@ type Claims struct {
 	CustomerId string   `json:"customer_id"`
 	Accounts   []string `json:"accounts"`
 	Username   string   `json:"username"`
-	Expiry     int64    `json:"exp"`
-	Role       string   `json:"role"`
+	// Expiry     int64    `json:"exp"`
+	Role string `json:"role"`
+	jwt.StandardClaims
 }
 
 func (c Claims) IsUserRole() bool {

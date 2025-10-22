@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/alflanagan/banking-lib/errs"
 	"github.com/alflanagan/banking-lib/logger"
 	"github.com/ashishjuyal/banking-auth/domain"
@@ -10,7 +12,7 @@ import (
 
 type AuthService interface {
 	Login(dto.LoginRequest) (*string, *errs.AppError)
-	Verify(urlParams map[string]string) (bool, *errs.AppError)
+	Verify(urlParams map[string]string) *errs.AppError
 }
 
 type DefaultAuthService struct {
@@ -30,10 +32,10 @@ func (s DefaultAuthService) Login(req dto.LoginRequest) (*string, *errs.AppError
 	return token, nil
 }
 
-func (s DefaultAuthService) Verify(urlParams map[string]string) (bool, *errs.AppError) {
+func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
 	// convert the string token to JWT struct
 	if jwtToken, err := jwtTokenFromString(urlParams["token"]); err != nil {
-		return false, errs.NewUnexpectedError(err.Error())
+		return errs.NewAuthenticationError(err.Error())
 	} else {
 		/*
 		   Checking the validity of the token, this verifies the expiry
@@ -41,31 +43,34 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) (bool, *errs.App
 		*/
 		if jwtToken.Valid {
 			// type cast the token claims to jwt.MapClaims
-			mapClaims := jwtToken.Claims.(jwt.MapClaims)
+			claims := jwtToken.Claims.(*domain.Claims)
 			// converting the token claims to Claims struct
-			if claims, err := domain.BuildClaimsFromJwtMapClaims(mapClaims); err != nil {
-				return false, errs.NewAuthenticationError(err.Error())
-			} else {
-				/* if Role if user then check if the account_id and customer_id
-				   coming in the URL belongs to the same token
-				*/
-				if claims.IsUserRole() {
-					if !claims.IsRequestVerifiedWithTokenClaims(urlParams) {
-						return false, nil
-					}
+			//if claims, err := domain.BuildClaimsFromJwtMapClaims(mapClaims); err != nil {
+			//	return errs.NewAuthenticationError(err.Error())
+			//} else {
+			/* if Role user then check if the account_id and customer_id
+			   coming in the URL belongs to the same token
+			*/
+			if claims.IsUserRole() {
+				if !claims.IsRequestVerifiedWithTokenClaims(urlParams) {
+					return errs.NewAuthorizationError("user role not verified")
 				}
-				// verify of the role is authorized to use the route
-				isAuthorized := s.rolePermissions.IsAuthorizedFor(claims.Role, urlParams["routeName"])
-				return isAuthorized, nil
 			}
+			// verify of the role is authorized to use the route
+			isAuthorized := s.rolePermissions.IsAuthorizedFor(claims.Role, urlParams["routeName"])
+			if !isAuthorized {
+				return errs.NewAuthorizationError(fmt.Sprintf("user not authorized for %s role", claims.Role))
+			}
+			return nil
+			// }
 		} else {
-			return false, errs.NewAuthenticationError("invalid token")
+			return errs.NewAuthorizationError("invalid token")
 		}
 	}
 }
 
 func jwtTokenFromString(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &domain.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(domain.HMAC_SAMPLE_SECRET), nil
 	})
 	if err != nil {
