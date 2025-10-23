@@ -53,8 +53,12 @@ func (h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 			writeResponse(w, http.StatusOK, authorizedResponse())
 		}
 	} else {
-		writeResponse(w, http.StatusForbidden, "missing token")
+		writeResponse(w, http.StatusForbidden, missingTokenResponse("missing token"))
 	}
+}
+
+func missingTokenResponse(msg string) map[string]any {
+	return map[string]any{"message": msg, "isAuthorized": false}
 }
 
 func notAuthorizedResponse(msg string) map[string]any {

@@ -44,11 +44,7 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
 		if jwtToken.Valid {
 			// type cast the token claims to jwt.MapClaims
 			claims := jwtToken.Claims.(*domain.Claims)
-			// converting the token claims to Claims struct
-			//if claims, err := domain.BuildClaimsFromJwtMapClaims(mapClaims); err != nil {
-			//	return errs.NewAuthenticationError(err.Error())
-			//} else {
-			/* if Role user then check if the account_id and customer_id
+			/* if Role is user then check if the account_id and customer_id
 			   coming in the URL belongs to the same token
 			*/
 			if claims.IsUserRole() {
@@ -62,7 +58,6 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
 				return errs.NewAuthorizationError(fmt.Sprintf("user not authorized for %s role", claims.Role))
 			}
 			return nil
-			// }
 		} else {
 			return errs.NewAuthorizationError("invalid token")
 		}
