@@ -1,7 +1,6 @@
 FROM mariadb:latest
-EXPOSE 3307
+EXPOSE 3306
 
-ENV
-      MYSQL_ROOT_PASSWORD=admin
-      MYSQL_DATABASE=banking
-      TZ=America/New_York
+ENV   MYSQL_ROOT_PASSWORD=admin
+ENV   MYSQL_DATABASE=banking
+ENV   TZ=America/New_York
