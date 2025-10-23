@@ -61,9 +61,18 @@ func sanityCheck() {
 		"DB_PORT",
 		"DB_NAME",
 	}
+
+	// use flag to check all variables, but quit if any are missing
+	quit := false
+
 	for _, k := range envProps {
 		if os.Getenv(k) == "" {
+			quit = true
 			log.Println(fmt.Sprintf("Environment variable %s not defined. Terminating application...", k))
 		}
 	}
+	if quit {
+		os.Exit(1)
+	}
+
 }
