@@ -17,4 +17,4 @@ COPY . .
 # Expose port
 EXPOSE 8081
 
-CMD ["/bin/ash", "-c", "make run"]
+CMD ["/bin/ash", "-c", "make start"]
