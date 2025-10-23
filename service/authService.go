@@ -11,7 +11,7 @@ import (
 )
 
 type AuthService interface {
-	Login(dto.LoginRequest) (*string, *errs.AppError)
+	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(urlParams map[string]string) *errs.AppError
 }
 
@@ -20,16 +20,20 @@ type DefaultAuthService struct {
 	rolePermissions domain.RolePermissions
 }
 
-func (s DefaultAuthService) Login(req dto.LoginRequest) (*string, *errs.AppError) {
-	login, err := s.repo.FindBy(req.Username, req.Password)
-	if err != nil {
-		return nil, errs.NewAuthenticationError(err.Error())
+func (s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
+	var appErr *errs.AppError
+	var login *domain.Login
+	var accessToken string
+
+	if login, appErr = s.repo.FindBy(req.Username, req.Password); appErr != nil {
+		return nil, appErr
 	}
-	token, err := login.GenerateToken()
-	if err != nil {
-		return nil, errs.NewAuthenticationError(err.Error())
+	claims := login.ClaimsForAccessToken()
+	authToken := domain.NewAuthToken(claims)
+	if accessToken, appErr = authToken.NewAccessToken(); appErr != nil {
+		return nil, appErr
 	}
-	return token, nil
+	return &dto.LoginResponse{AccessToken: accessToken}, nil
 }
 
 func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
