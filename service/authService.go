@@ -23,7 +23,7 @@ type DefaultAuthService struct {
 func (s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *errs.AppError) {
 	var appErr *errs.AppError
 	var login *domain.Login
-	var accessToken string
+	var accessToken, refreshToken string
 
 	if login, appErr = s.repo.FindBy(req.Username, req.Password); appErr != nil {
 		return nil, appErr
@@ -33,7 +33,11 @@ func (s DefaultAuthService) Login(req dto.LoginRequest) (*dto.LoginResponse, *er
 	if accessToken, appErr = authToken.NewAccessToken(); appErr != nil {
 		return nil, appErr
 	}
-	return &dto.LoginResponse{AccessToken: accessToken}, nil
+
+	if refreshToken, appErr = s.repo.GenerateRefreshTokenAndStore(authToken); appErr != nil {
+		return nil, appErr
+	}
+	return &dto.LoginResponse{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
 func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
