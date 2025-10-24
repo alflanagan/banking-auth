@@ -20,7 +20,7 @@ func (t AuthToken) NewAccessToken() (string, *errs.AppError) {
 }
 
 func (t AuthToken) newRefreshToken() (string, *errs.AppError) {
-	c := t.token.Claims.(Claims)
+	c := t.token.Claims.(AccessTokenClaims)
 	refreshToken := c.RefreshTokenClaims()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshToken)
 	signedString, err := token.SignedString([]byte(HMAC_SAMPLE_SECRET))
@@ -31,8 +31,21 @@ func (t AuthToken) newRefreshToken() (string, *errs.AppError) {
 	return signedString, nil
 }
 
-func NewAuthToken(claims Claims) AuthToken {
+func NewAuthToken(claims AccessTokenClaims) AuthToken {
 	return AuthToken{
 		token: jwt.NewWithClaims(jwt.SigningMethodHS256, claims),
 	}
+}
+
+func NewAccessTokenFromRefreshToken(refreshToken string) (string, *errs.AppError) {
+	token, err := jwt.ParseWithClaims(refreshToken, &RefreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(HMAC_SAMPLE_SECRET), nil
+	})
+	if err != nil {
+		return "", errs.NewUnexpectedError("invalid or expired refresh token")
+	}
+	r := token.Claims.(*RefreshTokenClaims)
+	accessTokenClaims := r.AccessTokenClaims()
+	authToken := NewAuthToken(accessTokenClaims)
+	return authToken.NewAccessToken()
 }

@@ -13,6 +13,7 @@ import (
 type AuthService interface {
 	Login(dto.LoginRequest) (*dto.LoginResponse, *errs.AppError)
 	Verify(urlParams map[string]string) *errs.AppError
+	Refresh(request dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError)
 }
 
 type DefaultAuthService struct {
@@ -51,7 +52,7 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
 		*/
 		if jwtToken.Valid {
 			// type cast the token claims to jwt.MapClaims
-			claims := jwtToken.Claims.(*domain.Claims)
+			claims := jwtToken.Claims.(*domain.AccessTokenClaims)
 			/* if Role is user then check if the account_id and customer_id
 			   coming in the URL belongs to the same token
 			*/
@@ -72,8 +73,29 @@ func (s DefaultAuthService) Verify(urlParams map[string]string) *errs.AppError {
 	}
 }
 
+func (s DefaultAuthService) Refresh(request dto.RefreshTokenRequest) (*dto.LoginResponse, *errs.AppError) {
+	// is access token signed by us and expired?
+	if vErr := request.IsAccessTokenValid(); vErr != nil {
+		if vErr.Errors == jwt.ValidationErrorExpired {
+			// continue with refresh token functionality
+			var appErr *errs.AppError
+			if appErr = s.repo.RefreshTokenExists(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+			// generate new access token
+			var accessToken string
+			if accessToken, appErr = domain.NewAccessTokenFromRefreshToken(request.RefreshToken); appErr != nil {
+				return nil, appErr
+			}
+			return &dto.LoginResponse{AccessToken: accessToken}, nil
+		}
+		return nil, errs.NewAuthenticationError("invalid access token")
+	}
+	return nil, errs.NewAuthenticationError("cannot generate access token, current access token has not expired")
+}
+
 func jwtTokenFromString(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &domain.Claims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &domain.AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(domain.HMAC_SAMPLE_SECRET), nil
 	})
 	if err != nil {

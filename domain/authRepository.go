@@ -2,6 +2,7 @@ package domain
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/alflanagan/banking-lib/errs"
@@ -12,6 +13,7 @@ import (
 type AuthRepository interface {
 	FindBy(username string, password string) (*Login, *errs.AppError)
 	GenerateRefreshTokenAndStore(authToken AuthToken) (string, *errs.AppError)
+	RefreshTokenExists(refreshToken string) *errs.AppError
 }
 
 type AuthRepositoryDb struct {
@@ -51,6 +53,21 @@ func (d AuthRepositoryDb) FindBy(username, password string) (*Login, *errs.AppEr
 		}
 	}
 	return &login, nil
+}
+
+func (d AuthRepositoryDb) RefreshTokenExists(refreshToken string) *errs.AppError {
+	sqlSelect := "SELECT refresh_token FROM banking.refresh_token_store WHERE refresh_token = ?"
+	var token string
+	err := d.client.Get(&token, sqlSelect, refreshToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errs.NewAuthenticationError("refresh token not registered")
+		} else {
+			logger.Error("Unexpected database error: " + err.Error())
+			return errs.NewUnexpectedError("Unexpected database error")
+		}
+	}
+	return nil
 }
 
 func NewAuthRepository(client *sqlx.DB) AuthRepositoryDb {

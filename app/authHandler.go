@@ -14,7 +14,7 @@ type AuthHandler struct {
 }
 
 func (h AuthHandler) NotImplementedHandler(w http.ResponseWriter, _ *http.Request) {
-	writeResponse(w, http.StatusOK, "Handler not implemented...")
+	writeJSONResponse(w, http.StatusOK, "Handler not implemented...")
 }
 
 func (h AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -25,9 +25,9 @@ func (h AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	} else {
 		token, appErr := h.service.Login(loginRequest)
 		if appErr != nil {
-			writeResponse(w, appErr.Code, appErr.AsMessage())
+			writeJSONResponse(w, appErr.Code, appErr.AsMessage())
 		} else {
-			writeResponse(w, http.StatusOK, *token)
+			writeJSONResponse(w, http.StatusOK, *token)
 		}
 	}
 }
@@ -48,12 +48,27 @@ func (h AuthHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	if urlParams["token"] != "" {
 		appErr := h.service.Verify(urlParams)
 		if appErr != nil {
-			writeResponse(w, appErr.Code, notAuthorizedResponse(appErr.Message))
+			writeJSONResponse(w, appErr.Code, notAuthorizedResponse(appErr.Message))
 		} else {
-			writeResponse(w, http.StatusOK, authorizedResponse())
+			writeJSONResponse(w, http.StatusOK, authorizedResponse())
 		}
 	} else {
-		writeResponse(w, http.StatusForbidden, missingTokenResponse("missing token"))
+		writeJSONResponse(w, http.StatusForbidden, missingTokenResponse("missing token"))
+	}
+}
+
+func (h AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	var refreshRequest dto.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&refreshRequest); err != nil {
+		logger.Error("Error while decoding login request: " + err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+	} else {
+		token, appErr := h.service.Refresh(refreshRequest)
+		if appErr != nil {
+			writeJSONResponse(w, appErr.Code, appErr.AsMessage())
+		} else {
+			writeJSONResponse(w, http.StatusOK, *token)
+		}
 	}
 }
 
@@ -69,7 +84,7 @@ func authorizedResponse() map[string]bool {
 	return map[string]bool{"isAuthorized": true}
 }
 
-func writeResponse(w http.ResponseWriter, code int, data interface{}) {
+func writeJSONResponse(w http.ResponseWriter, code int, data interface{}) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
